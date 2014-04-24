@@ -162,7 +162,10 @@ def run():
                 sys.stdout.flush()
         p = None
         f = formatter.Formatter(args)
-        if not os.path.exists(args.target):
+        target = args.target
+        if target == '-': # read less from stdin
+            target = sys.stdin
+        elif not os.path.exists(args.target):
             sys.exit("Target not found '%s' ..." % args.target)
         if os.path.isdir(args.target):
             ldirectory(args.target, args.out, args, scope)
@@ -174,7 +177,7 @@ def run():
                                   yacc_optimize=(not args.debug),
                                   scope=copy.deepcopy(scope),
                                   verbose=args.verbose)
-            p.parse(filename=args.target, debuglevel=args.debug)
+            p.parse(file=target, debuglevel=args.debug)
             if args.scopemap:
                 args.no_css = True
                 p.scopemap()

@@ -94,7 +94,7 @@ class LessParser(object):
                 if filename is not None:
                     raise AssertionError(
                         'names of file and filename are in conflict')
-                filename = file.name()
+                filename = file.name
             else:
                 filename = '(stream)'
 
