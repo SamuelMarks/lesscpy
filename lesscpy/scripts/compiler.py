@@ -23,7 +23,7 @@ from lesscpy.lessc import parser
 from lesscpy.lessc import lexer
 from lesscpy.lessc import formatter
 
-VERSION_STR = 'Lesscpy compiler 0.9h'
+VERSION_STR = 'Lesscpy compiler 0.9i'
 
 
 def ldirectory(inpath, outpath, args, scope):
@@ -55,9 +55,9 @@ def ldirectory(inpath, outpath, args, scope):
             recompile = True
         if recompile:
             print('%s -> %s' % (lf, outf))
-            p = parser.LessParser(yacc_debug=(args.debug),
+            p = parser.LessParser(yacc_debug=args.debug,
                                   lex_optimize=True,
-                                  yacc_optimize=(not args.debug),
+                                  yacc_optimize=not args.debug,
                                   scope=scope,
                                   tabfile=yacctab,
                                   verbose=args.verbose)
@@ -75,14 +75,16 @@ def ldirectory(inpath, outpath, args, scope):
          if os.path.isdir(os.path.join(inpath, name))
          and not name.startswith('.')
          and not name == outpath]
+
+
 #
-#    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
 
-def run():
-    """Run compiler
-    """
+def add_arguments():
+    """ Adds all arguments into an ArgumentParser object then returns that """
+
     aparse = argparse.ArgumentParser(description='LessCss Compiler',
                                      epilog='<< jtm@robot.is @_o >>')
     aparse.add_argument('-v', '--version', action='version',
@@ -121,10 +123,25 @@ def run():
     group.add_argument('-N', '--no-css', action="store_true",
                        default=False, help="No css output")
     aparse.add_argument('target', help="less file or directory")
-    args = aparse.parse_args()
+    return aparse
+
+
+def run(**kwargs):
+    """
+    Run compiler. Callable with args so usable as a library.
+    """
+
+    aparse = add_arguments()
+    if kwargs:
+        args = argparse.Namespace(**kwargs)
+        return_css = True
+    else:
+        args = aparse.parse_args()
+        return_css = False
+
     try:
         #
-        #    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         #
         if args.lex_only:
             lex = lexer.LessLexer()
@@ -140,16 +157,16 @@ def run():
             print('EOF')
             sys.exit()
         #
-        #    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         #
         yacctab = 'yacctab' if args.debug else None
         scope = None
         if args.include:
             for u in args.include.split(','):
                 if os.path.exists(u):
-                    p = parser.LessParser(yacc_debug=(args.debug),
+                    p = parser.LessParser(yacc_debug=args.debug,
                                           lex_optimize=True,
-                                          yacc_optimize=(not args.debug),
+                                          yacc_optimize=not args.debug,
                                           tabfile=yacctab,
                                           verbose=args.verbose)
                     p.parse(filename=u, debuglevel=args.debug)
@@ -160,10 +177,10 @@ def run():
                 else:
                     sys.exit('included file `%s` not found ...' % u)
                 sys.stdout.flush()
-        p = None
+
         f = formatter.Formatter(args)
         target = args.target
-        if target == '-': # read less from stdin
+        if target == '-':  # read less from stdin
             target = sys.stdin
         elif not os.path.exists(args.target):
             sys.exit("Target not found '%s' ..." % args.target)
@@ -172,7 +189,7 @@ def run():
             if args.dry_run:
                 print('Dry run, nothing done.', file=sys.stderr)
         else:
-            p = parser.LessParser(yacc_debug=(args.debug),
+            p = parser.LessParser(yacc_debug=args.debug,
                                   lex_optimize=True,
                                   yacc_optimize=(not args.debug),
                                   scope=copy.deepcopy(scope),
@@ -182,7 +199,9 @@ def run():
                 args.no_css = True
                 p.scopemap()
             if not args.no_css and p:
-                out = f.format(p)
-                print(out)
+                css = f.format(p)
+                if return_css:
+                    return css
+                print(css)
     except (KeyboardInterrupt, SystemExit, IOError):
         sys.exit('\nAborting...')
