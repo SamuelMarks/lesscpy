@@ -19,8 +19,3 @@ def compile_less(less):
     return run(debug=False, dry_run=False, force=False, include=None, lex_only=False,
                min_ending=False, minify=False, no_css=False, out=None, recurse=False,
                scopemap=False, spaces=2, tabs=False, target=less, verbose=False, xminify=False)
-
-
-if __name__ == '__main__':
-    print compile_less(path.join(path.expanduser('~'), 'Abbrevi8/abbrevi8-mail/templates/zurb-ink-3/less',
-                                 'main.less'))
